@@ -1,0 +1,157 @@
+services:
+  frontend:
+    image: ai-vapt-frontend:0.1.0
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    environment:
+      VITE_API_PROXY_TARGET: http://backend:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - app_net
+
+  backend:
+    image: ai-vapt-backend:0.1.0
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai_compatible}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      ZAP_API_KEY: ${ZAP_API_KEY:?Set ZAP_API_KEY in .env}
+      RUNNER_TOKEN: ${RUNNER_TOKEN:?Set RUNNER_TOKEN in .env}
+      ZAP_URL: ${ZAP_URL:-http://zap:8090}
+      RUNNER_URL: ${RUNNER_URL:-http://scanner-runner:9000}
+      DB_URL: sqlite:////data/vapt.db
+      DATA_DIR: /data
+      LAB_CIDR: ${LAB_CIDR:-172.30.0.0/24}
+      ALLOW_PUBLIC_TARGETS: ${ALLOW_PUBLIC_TARGETS:-false}
+      ENABLE_ZAP_ACTIVE_SCAN: ${ENABLE_ZAP_ACTIVE_SCAN:-false}
+      ENABLE_ACTIVE_VALIDATION: ${ENABLE_ACTIVE_VALIDATION:-false}
+    volumes:
+      - backend_data:/data
+    expose:
+      - "8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; assert urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read() == b'OK'"
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+    networks:
+      egress_net: {}
+      app_net: {}
+      lab_net:
+        ipv4_address: 172.30.0.50
+
+  scanner-runner:
+    image: ai-vapt-scanner-runner:0.1.0
+    build:
+      context: .
+      dockerfile: runner/Dockerfile
+    restart: unless-stopped
+    environment:
+      RUNNER_TOKEN: ${RUNNER_TOKEN:?Set RUNNER_TOKEN in .env}
+      LAB_CIDR: ${LAB_CIDR:-172.30.0.0/24}
+      RUNNER_BACKEND_IP: 172.30.0.50
+      ENABLE_ACTIVE_VALIDATION: ${ENABLE_ACTIVE_VALIDATION:-false}
+      AUDIT_PATH: /var/lib/scanner-runner/audit.jsonl
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 128
+    mem_limit: 512m
+    volumes:
+      - runner_audit:/var/lib/scanner-runner
+    expose:
+      - "9000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; assert urllib.request.urlopen('http://127.0.0.1:9000/health', timeout=2).read() == b'OK'"
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      lab_net:
+        ipv4_address: 172.30.0.40
+
+  zap:
+    image: zaproxy/zap-stable:2.16.1@sha256:7840969c7c9fead565bf9734b12f49f6886db90b1d35b1f74d79710bbd081dab
+    restart: unless-stopped
+    environment:
+      ZAP_API_KEY: ${ZAP_API_KEY:?Set ZAP_API_KEY in .env}
+    command:
+      - zap.sh
+      - -daemon
+      - -host
+      - 0.0.0.0
+      - -port
+      - "8090"
+      - -config
+      - "api.key=${ZAP_API_KEY:?Set ZAP_API_KEY in .env}"
+      - -config
+      - 'api.addrs.addr.name=^172\.30\.0\.(40|50)$'
+      - -config
+      - api.addrs.addr.regex=true
+    expose:
+      - "8090"
+    networks:
+      lab_net:
+        ipv4_address: 172.30.0.30
+
+  juice-shop:
+    image: bkimminich/juice-shop:v17.1.1@sha256:9e437b456e444ff001d1663e4f6f05c796fe02f1058dd2651d6791a15b43dfeb
+    restart: unless-stopped
+    expose:
+      - "3000"
+    networks:
+      lab_net:
+        ipv4_address: 172.30.0.10
+
+  dvwa:
+    image: ghcr.io/digininja/dvwa:e8fd506@sha256:3f31c553958f57f602857f7684c8e282f7d45cc6beefe355e9975fdcc4cb3f6a
+    restart: unless-stopped
+    expose:
+      - "4280"
+    networks:
+      lab_net:
+        ipv4_address: 172.30.0.20
+
+  # Optional Metasploitable2 is intentionally omitted: it has no official image.
+  # Use a separate VM or skip it; never attach an unreviewed image to the lab.
+
+networks:
+  app_net:
+    driver: bridge
+    internal: true
+  lab_net:
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+  egress_net:
+    driver: bridge
+
+volumes:
+  backend_data:
+  runner_audit:

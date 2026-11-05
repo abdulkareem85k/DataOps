@@ -1,0 +1,49 @@
+{
+  "assessment": {
+    "name": "Schema round-trip test fixture",
+    "description": "SYNTHETIC TEST FIXTURE ONLY. Not a real assessment or scanner result."
+  },
+  "finding": {
+    "title": "Synthetic schema round-trip fixture",
+    "description": "SYNTHETIC TEST FIXTURE ONLY. This text tests persistence and is not a security claim.",
+    "category": "misconfig",
+    "service_id": null,
+    "port": 443,
+    "service_name": "Fixture HTTPS service",
+    "url": "https://fixture.invalid/",
+    "parameter": null,
+    "source_refs": [],
+    "cve_ids": [],
+    "cwe_ids": [],
+    "cvss_vector": null,
+    "cvss_score": null,
+    "tool_severity": null,
+    "confidence": "low",
+    "confidence_score": 0.25,
+    "confidence_reason": "SYNTHETIC TEST FIXTURE ONLY; not an assessment conclusion.",
+    "status": "suspected",
+    "validation_status": "not_validated",
+    "first_seen": "2026-01-01T00:00:00Z",
+    "last_seen": "2026-01-01T00:00:00Z",
+    "evidence": [
+      {
+        "type": "observed",
+        "content": "SYNTHETIC TEST FIXTURE ONLY: observed evidence field serialization placeholder; not scanner output.",
+        "raw_ref": {
+          "reference_file": "tests/fixtures/finding_roundtrip.json",
+          "path": "finding/evidence/0"
+        },
+        "timestamp": "2026-01-01T00:00:00Z"
+      },
+      {
+        "type": "inference",
+        "content": "SYNTHETIC TEST FIXTURE ONLY: inference field serialization placeholder; not an actual inference.",
+        "raw_ref": {
+          "reference_file": "tests/fixtures/finding_roundtrip.json",
+          "path": "finding/evidence/1"
+        },
+        "timestamp": "2026-01-01T00:00:01Z"
+      }
+    ]
+  }
+}

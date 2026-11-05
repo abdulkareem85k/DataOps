@@ -1,0 +1,10 @@
+FROM node:22.13.0-alpine3.21
+
+WORKDIR /app
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm install --global npm@10.9.9 \
+    && npm ci --no-audit --no-fund
+COPY frontend/ ./
+EXPOSE 3000
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
