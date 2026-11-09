@@ -175,3 +175,4 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ assessmentId, onPlanPropos
     </div>
   );
 };
+

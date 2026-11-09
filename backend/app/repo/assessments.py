@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.models.orm import Assessment
@@ -23,6 +24,14 @@ def get_assessment(session: Session, assessment_id: str) -> AssessmentRead:
     if row is None:
         raise RecordNotFound("assessment not found")
     return to_assessment_read(row)
+
+
+def list_assessments(session: Session) -> list[AssessmentRead]:
+    """Return all assessments ordered by created_at desc."""
+    rows = (
+        session.execute(select(Assessment).order_by(Assessment.created_at.desc())).scalars().all()
+    )
+    return [to_assessment_read(row) for row in rows]
 
 
 def to_assessment_read(row: Assessment) -> AssessmentRead:

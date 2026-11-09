@@ -178,3 +178,4 @@ export const FindingDetailDrawer: React.FC<FindingDetailDrawerProps> = ({
     </div>
   );
 };
+

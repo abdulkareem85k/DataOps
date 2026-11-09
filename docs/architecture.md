@@ -107,3 +107,4 @@ flowchart LR
   - **Live:** Nmap, Nikto, OWASP ZAP (active container/subprocess execution).
   - **Import-only:** Nessus, OpenVAS, Burp Suite (XML report parsing and normalization).
   - **Planned:** Metasploit (safe check module execution requiring human authorization).
+

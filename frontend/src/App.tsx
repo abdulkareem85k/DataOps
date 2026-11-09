@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   abortAssessment,
   fetchApprovals,
+  fetchAssessments,
   fetchAuditEvents,
   fetchFindings,
   fetchHealth,
@@ -19,7 +20,8 @@ import { Approval, AuditEvent, Finding, HealthState } from './types';
 export default function App() {
   const [currentTab, setCurrentTab] = useState('workspace');
   const [health, setHealth] = useState<HealthState>('checking');
-  const [activeAssessmentId, setActiveAssessmentId] = useState<string>('ASM-DEMO-001');
+  const [assessments, setAssessments] = useState<any[]>([]);
+  const [activeAssessmentId, setActiveAssessmentId] = useState<string>('');
   const [findings, setFindings] = useState<Finding[]>([]);
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
@@ -30,6 +32,12 @@ export default function App() {
   // Poll health and assessment data
   useEffect(() => {
     fetchHealth().then((ok) => setHealth(ok ? 'online' : 'offline'));
+    fetchAssessments().then((list) => {
+      setAssessments(list);
+      if (list.length > 0) {
+        setActiveAssessmentId(list[0].id);
+      }
+    });
   }, []);
 
   const refreshData = async (asmId: string) => {
@@ -109,6 +117,8 @@ export default function App() {
           currentTab={currentTab}
           health={health}
           activeAssessmentId={activeAssessmentId}
+          assessments={assessments}
+          onSelectAssessment={(id) => setActiveAssessmentId(id)}
           onNewAssessment={() => setIsModalOpen(true)}
           onEmergencyStop={handleEmergencyStop}
           isStopping={isStopping}
@@ -223,6 +233,7 @@ export default function App() {
         onClose={() => setIsModalOpen(false)}
         onCreated={(id) => {
           setActiveAssessmentId(id);
+          fetchAssessments().then((list) => setAssessments(list));
           refreshData(id);
           setCurrentTab('workspace');
         }}

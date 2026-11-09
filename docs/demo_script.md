@@ -94,3 +94,4 @@ Navigate to `http://localhost:5173`.
 3. Open the **Audit Trail** tab:
    - Click **"Verify Cryptographic Chain"**.
    - Show the green verification banner: **"Cryptographic SHA-256 hash chain is verified intact from genesis."**
+

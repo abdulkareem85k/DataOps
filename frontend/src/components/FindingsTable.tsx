@@ -110,3 +110,4 @@ export const FindingsTable: React.FC<FindingsTableProps> = ({
     </div>
   );
 };
+

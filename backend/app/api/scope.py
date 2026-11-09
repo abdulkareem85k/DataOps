@@ -15,7 +15,7 @@ from app.models.schemas import (
     ScopeRuleCreate,
     ScopeRuleRead,
 )
-from app.repo.assessments import create_assessment, get_assessment
+from app.repo.assessments import create_assessment, get_assessment, list_assessments
 from app.repo.common import RecordNotFound
 from app.repo.scope import get_scope_rules
 from app.scope.engine import ScopeRegistrationError, check_action, register_scope
@@ -31,6 +31,14 @@ def _settings(request: Request) -> Settings:
 
 DbSession = Annotated[Session, Depends(get_session)]
 AppSettings = Annotated[Settings, Depends(_settings)]
+
+
+@router.get("/assessments", response_model=list[AssessmentRead])
+def list_assessments_endpoint(
+    session: DbSession,
+) -> list[AssessmentRead]:
+    """List all assessments ordered chronologically descending."""
+    return list_assessments(session)
 
 
 @router.post("/assessments", response_model=AssessmentRead)

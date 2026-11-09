@@ -252,3 +252,4 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
     </div>
   );
 };
+

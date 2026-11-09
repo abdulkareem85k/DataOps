@@ -5,6 +5,8 @@ interface TopBarProps {
   currentTab: string;
   health: HealthState;
   activeAssessmentId: string;
+  assessments: { id: string; name: string }[];
+  onSelectAssessment: (id: string) => void;
   onNewAssessment: () => void;
   onEmergencyStop: () => void;
   isStopping: boolean;
@@ -14,6 +16,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   currentTab,
   health,
   activeAssessmentId,
+  assessments,
+  onSelectAssessment,
   onNewAssessment,
   onEmergencyStop,
   isStopping,
@@ -22,12 +26,28 @@ export const TopBar: React.FC<TopBarProps> = ({
     <header className="topbar">
       <div className="breadcrumb flex items-center gap-2">
         <span className="font-mono text-[9px] uppercase tracking-wider text-slate-500">
-          ASSESSMENT
+          WORKSPACE
         </span>
         <span className="breadcrumb-slash text-slate-400">/</span>
-        <span className="font-semibold text-slate-800 text-xs">
-          {activeAssessmentId || 'No Active Workspace'}
-        </span>
+
+        {assessments.length > 0 ? (
+          <select
+            value={activeAssessmentId}
+            onChange={(e) => onSelectAssessment(e.target.value)}
+            className="text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded px-2 py-1 max-w-[280px]"
+          >
+            {assessments.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.id} — {a.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <span className="font-semibold text-slate-800 text-xs">
+            {activeAssessmentId || 'No Active Workspace'}
+          </span>
+        )}
+
         <span className="breadcrumb-slash text-slate-400">/</span>
         <span className="font-mono text-[10px] uppercase text-blue-600">
           {currentTab}

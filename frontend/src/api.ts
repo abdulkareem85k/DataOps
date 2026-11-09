@@ -32,6 +32,15 @@ export async function fetchHealth(): Promise<boolean> {
   }
 }
 
+export async function fetchAssessments(): Promise<any[]> {
+  try {
+    const res = await fetch('/assessments');
+    return handleResponse<any[]>(res);
+  } catch {
+    return [];
+  }
+}
+
 export async function createAssessment(name: string, description: string): Promise<{ id: string; name: string }> {
   const res = await fetch('/assessments', {
     method: 'POST',
@@ -175,3 +184,4 @@ export async function generateReport(
   });
   return handleResponse(res);
 }
+

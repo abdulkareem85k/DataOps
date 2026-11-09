@@ -85,3 +85,4 @@ export const IntegrationsMatrix: React.FC = () => {
     </div>
   );
 };
+

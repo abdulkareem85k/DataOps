@@ -1,6 +1,11 @@
 """Repository functions. Routers must not touch the ORM directly."""
 
-from app.repo.assessments import AssessmentRepository, create_assessment, get_assessment
+from app.repo.assessments import (
+    AssessmentRepository,
+    create_assessment,
+    get_assessment,
+    list_assessments,
+)
 from app.repo.assets import (
     AssetRepository,
     create_asset,
@@ -62,6 +67,7 @@ __all__ = [
     "get_scope_rules",
     "get_service",
     "get_tool_run",
+    "list_assessments",
     "list_assets",
     "list_audit_events",
     "list_findings",
