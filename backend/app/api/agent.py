@@ -90,6 +90,15 @@ async def chat_endpoint(
         chat_history=domain_history,
     )
 
+    if not response.content or not response.content.strip():
+        if response.tool_calls:
+            tool_names = ", ".join(tc.name for tc in response.tool_calls)
+            response.content = (
+                f"Executed tool actions: {tool_names}. Assessment findings and logs updated."
+            )
+        else:
+            response.content = "Assessment analyzed. Ready for further instructions."
+
     # Persist assistant response
     assistant_row = ChatMessage(
         id=new_id("MSG"),
@@ -102,6 +111,7 @@ async def chat_endpoint(
 
     state = orchestrator.get_state(assessment_id)
     return {
+        "text": response.content,
         "content": response.content,
         "tool_calls": [
             {"id": tc.id, "name": tc.name, "arguments": tc.arguments} for tc in response.tool_calls

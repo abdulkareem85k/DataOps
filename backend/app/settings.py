@@ -20,9 +20,10 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    llm_provider: str = "openai_compatible"
-    llm_model: str = ""
+    llm_provider: str = "mock"
+    llm_model: str = "openai/gpt-oss-120b"
     llm_api_key: SecretStr = SecretStr("")
+    llm_base_url: str = "https://api.groq.com/openai/v1"
     zap_api_key: SecretStr = SecretStr("")
     zap_url: str = "http://zap:8090"
     runner_url: str = "http://scanner-runner:9000"

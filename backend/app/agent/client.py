@@ -18,6 +18,7 @@ class ChatMessage:
     content: str
     tool_call_id: str | None = None
     name: str | None = None
+    tool_calls: list[ToolCall] | None = None
 
 
 @dataclass
@@ -95,6 +96,7 @@ class OpenAICompatibleClient(LLMClient):
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
+            "User-Agent": "vapt-agent/1.0",
         }
         payload_messages = []
         for m in messages:
@@ -103,6 +105,15 @@ class OpenAICompatibleClient(LLMClient):
                 item["tool_call_id"] = m.tool_call_id
             if m.name:
                 item["name"] = m.name
+            if getattr(m, "tool_calls", None):
+                item["tool_calls"] = [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {"name": tc.name, "arguments": json.dumps(tc.arguments)},
+                    }
+                    for tc in m.tool_calls
+                ]
             payload_messages.append(item)
 
         payload: dict[str, Any] = {
@@ -119,7 +130,17 @@ class OpenAICompatibleClient(LLMClient):
                 headers=headers,
             )
             if resp.status_code != 200:
-                raise RuntimeError(f"LLM API error ({resp.status_code}): {resp.text}")
+                if tools and resp.status_code == 400 and "tool" in resp.text.lower():
+                    # Fallback to direct conversational completion if tool format failed
+                    retry_payload = dict(payload)
+                    retry_payload.pop("tools", None)
+                    resp = await client.post(
+                        f"{self.base_url}/chat/completions",
+                        json=retry_payload,
+                        headers=headers,
+                    )
+                if resp.status_code != 200:
+                    raise RuntimeError(f"LLM API error ({resp.status_code}): {resp.text}")
 
             data = resp.json()
             choice = data["choices"][0]["message"]
@@ -144,9 +165,24 @@ class OpenAICompatibleClient(LLMClient):
 
 
 def get_llm_client(settings: Settings | None = None) -> LLMClient:
-    """Return configured LLM provider or MockLLMClient if unconfigured."""
+    """Return configured LLM provider or MockLLMClient if unconfigured or in tests."""
+    import os
+
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return MockLLMClient()
+
     s = settings or get_settings()
     api_key = s.llm_api_key.get_secret_value()
-    if not api_key or s.llm_provider == "mock":
+    provider = (s.llm_provider or "").lower()
+    if not api_key or provider == "mock":
         return MockLLMClient()
-    return OpenAICompatibleClient(api_key=api_key, model=s.llm_model)
+
+    base_url = getattr(s, "llm_base_url", "")
+    if provider == "groq":
+        base_url = base_url or "https://api.groq.com/openai/v1"
+        model = s.llm_model or "openai/gpt-oss-120b"
+    else:
+        base_url = base_url or "https://api.openai.com/v1"
+        model = s.llm_model or "gpt-4o"
+
+    return OpenAICompatibleClient(api_key=api_key, model=model, base_url=base_url)

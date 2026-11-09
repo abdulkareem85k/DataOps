@@ -72,6 +72,7 @@ class AgentOrchestrator:
 
         # 2. Execute any proposed tool calls
         if response.tool_calls:
+            tool_messages: list[ChatMessage] = []
             for tc in response.tool_calls:
                 call_args = dict(tc.arguments)
                 call_args["assessment_id"] = assessment_id
@@ -124,17 +125,51 @@ class AgentOrchestrator:
                     )
                     if tc.name != "propose_plan":
                         state.completed_steps.append(f"{tc.name}:{call_args.get('target', '')}")
+                    tool_messages.append(
+                        ChatMessage(
+                            role="tool",
+                            content=json.dumps(tool_result),
+                            tool_call_id=tc.id,
+                            name=tc.name,
+                        )
+                    )
                     await event_hub.emit(
                         assessment_id,
                         "step_finished",
                         {"tool": tc.name, "result": tool_result},
                     )
                 except Exception as exc:
+                    tool_messages.append(
+                        ChatMessage(
+                            role="tool",
+                            content=json.dumps({"error": str(exc)}),
+                            tool_call_id=tc.id,
+                            name=tc.name,
+                        )
+                    )
                     await event_hub.emit(
                         assessment_id,
                         "step_failed",
                         {"tool": tc.name, "error": str(exc)},
                     )
+
+            # If model produced only tool calls without final text, request synthesis
+            if not (response.content or "").strip() and tool_messages:
+                follow_up = list(messages)
+                follow_up.append(
+                    ChatMessage(
+                        role="assistant",
+                        content="",
+                        tool_calls=response.tool_calls,
+                    )
+                )
+                follow_up.extend(tool_messages)
+                try:
+                    synth_resp = await self.client.complete(follow_up)
+                    if synth_resp.content:
+                        response.content = synth_resp.content
+                except Exception:
+                    pass
 
         # 3. Anti-hallucination validation on final content
         cleaned_content, hallucinations = validate_grounding(

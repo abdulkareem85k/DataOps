@@ -45,7 +45,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ assessmentId, onPlanPropos
       const assistantMsg: ChatMessage = {
         id: `msg-${Date.now()}-ai`,
         role: 'assistant',
-        content: res.text,
+        content: res.text || (res as any).content || 'Response received.',
         tool_calls: res.tool_calls,
         timestamp: new Date().toLocaleTimeString(),
       };

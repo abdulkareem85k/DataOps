@@ -326,8 +326,12 @@ def seed_demo_data() -> str:
             finding_id=finding_apache.id,
             tool="metasploit",
             target="172.30.0.20:80",
-            params={"RHOSTS": "172.30.0.20", "RPORT": 80, "TARGETURI": "/cgi-bin/.%2e/%2e%2e/etc/passwd"},
-            justification="Confirm unauthenticated file read capability via harmless read-only proof on test lab.",
+            params={
+                "RHOSTS": "172.30.0.20",
+                "RPORT": 80,
+                "TARGETURI": "/cgi-bin/.%2e/%2e%2e/etc/passwd",
+            },
+            justification="Confirm unauthenticated file read via harmless read-only proof on lab.",
             risk="Active exploit execution against lab host. Requires human authorization.",
         )
 

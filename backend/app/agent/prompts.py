@@ -78,11 +78,11 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
                 "properties": {
                     "assessment_id": {"type": "string", "description": "Assessment ID"},
                     "severity": {
-                        "type": "string",
+                        "type": ["string", "null"],
                         "description": "Filter by severity (critical, high, medium, low, info)",
                     },
                     "sort": {
-                        "type": "string",
+                        "type": ["string", "null"],
                         "description": "Sort by (risk, severity, first_seen)",
                     },
                 },
@@ -99,7 +99,7 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
                 "type": "object",
                 "properties": {
                     "assessment_id": {"type": "string", "description": "Assessment ID"},
-                    "title": {"type": "string", "description": "Plan title"},
+                    "title": {"type": ["string", "null"], "description": "Plan title"},
                     "steps": {
                         "type": "array",
                         "items": {
@@ -141,7 +141,7 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
                     "assessment_id": {"type": "string", "description": "Assessment ID"},
                     "target": {"type": "string", "description": "In-scope target IP or hostname"},
                     "top_ports": {
-                        "type": "integer",
+                        "type": ["integer", "null"],
                         "description": "Number of top ports (100 or 1000)",
                     },
                 },
