@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<NessusClientData_v2>
+  <Report name="Synthetic Lab Scan">
+    <ReportHost name="172.30.0.10">
+      <HostProperties>
+        <tag name="host-ip">172.30.0.10</tag>
+        <tag name="host-fqdn">target.lab</tag>
+        <tag name="operating-system">Linux</tag>
+      </HostProperties>
+      <ReportItem port="80" svc_name="http" protocol="tcp" severity="3" pluginID="10001" pluginName="Apache HTTP Server Path Traversal (CVE-2021-41773)" pluginFamily="Web Servers">
+        <cve>CVE-2021-41773</cve>
+        <cvss_base_score>7.5</cvss_base_score>
+        <cvss3_vector>CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N</cvss3_vector>
+        <description>A flaw was found in a change made to path normalization in Apache HTTP Server 2.4.49 and 2.4.50.</description>
+        <plugin_output>Path traversal verified via curl payload: /icons/.%%32%65/etc/passwd</plugin_output>
+        <solution>Upgrade to Apache HTTP Server 2.4.51 or later.</solution>
+      </ReportItem>
+      <ReportItem port="22" svc_name="ssh" protocol="tcp" severity="1" pluginID="10002" pluginName="SSH Weak MAC Algorithms Enabled" pluginFamily="General">
+        <description>The remote SSH server is configured to allow weak MAC algorithms.</description>
+        <plugin_output>Supported weak algorithms: hmac-md5</plugin_output>
+        <solution>Disable MD5 and 96-bit MAC algorithms in sshd_config.</solution>
+      </ReportItem>
+    </ReportHost>
+    <ReportHost name="192.168.1.50">
+      <HostProperties>
+        <tag name="host-ip">192.168.1.50</tag>
+      </HostProperties>
+      <ReportItem port="445" svc_name="smb" protocol="tcp" severity="4" pluginID="10003" pluginName="SMB Out of Scope Vulnerability" pluginFamily="Windows">
+        <cve>CVE-2020-0796</cve>
+        <description>Out of scope host finding test.</description>
+      </ReportItem>
+    </ReportHost>
+  </Report>
+</NessusClientData_v2>

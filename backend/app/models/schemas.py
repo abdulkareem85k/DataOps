@@ -279,6 +279,46 @@ class ServiceCreate(StrictSchema):
     attributes: dict[str, Any] = Field(default_factory=dict)
 
 
+class ServiceRead(OrmReadSchema):
+    id: str
+    asset_id: str
+    port: int | None
+    protocol: str | None
+    name: str | None
+    version: str | None
+    attributes: dict[str, Any]
+    created_at: AwareDatetime
+
+
+class RawObservation(StrictSchema):
+    """Raw observation produced by a scanner adapter or file importer."""
+
+    tool: str = Field(min_length=1, max_length=80)
+    asset_identifier: str = Field(min_length=1, max_length=512)
+    asset_type: str = Field(default="host", max_length=80)
+    port: int | None = Field(default=None, ge=1, le=65535)
+    protocol: str | None = Field(default=None, max_length=32)
+    service_name: str | None = Field(default=None, max_length=160)
+    service_version: str | None = Field(default=None, max_length=200)
+    title: str = Field(min_length=1, max_length=300)
+    description: str = Field(min_length=1, max_length=100_000)
+    severity: str = Field(default="info", max_length=40)
+    confidence: str = Field(default="medium", max_length=16)
+    confidence_score: float = Field(default=0.5, ge=0.0, le=1.0)
+    category: str = Field(default="misconfig", max_length=40)
+    url: str | None = Field(default=None, max_length=2048)
+    parameter: str | None = Field(default=None, max_length=512)
+    cve_ids: list[str] = Field(default_factory=list)
+    cwe_ids: list[str] = Field(default_factory=list)
+    cvss_score: float | None = Field(default=None, ge=0.0, le=10.0)
+    cvss_vector: str | None = Field(default=None, max_length=256)
+    raw_ref: dict[str, Any] = Field(default_factory=dict)
+    evidence: str = Field(default="", max_length=100_000)
+    solution: str | None = Field(default=None, max_length=50_000)
+    references: list[str] = Field(default_factory=list)
+    timestamp: AwareDatetime | None = None
+
+
 class FindingCreate(StrictSchema):
     """The validated common input shape; it never calculates risk or invents IDs."""
 

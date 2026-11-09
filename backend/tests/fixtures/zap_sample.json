@@ -1,0 +1,48 @@
+{
+  "alerts": [
+    {
+      "sourceid": "3",
+      "other": "",
+      "method": "GET",
+      "evidence": "<script>alert(1)</script>",
+      "pluginId": "40012",
+      "cweid": "79",
+      "confidence": "High",
+      "wascid": "8",
+      "description": "Cross-site Scripting (XSS) is possible.",
+      "messageId": "1",
+      "url": "http://172.30.0.10/search?q=test",
+      "reference": "https://owasp.org/www-community/attacks/xss/",
+      "solution": "Filter and encode all user input.",
+      "alert": "Cross Site Scripting (Reflected)",
+      "param": "q",
+      "attack": "<script>alert(1)</script>",
+      "name": "Cross Site Scripting (Reflected)",
+      "risk": "High",
+      "id": "1",
+      "alertRef": "40012-1"
+    },
+    {
+      "sourceid": "3",
+      "other": "",
+      "method": "GET",
+      "evidence": "",
+      "pluginId": "10020",
+      "cweid": "16",
+      "confidence": "Medium",
+      "wascid": "15",
+      "description": "The response does not include Content-Security-Policy header.",
+      "messageId": "2",
+      "url": "http://172.30.0.10/",
+      "reference": "https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP",
+      "solution": "Configure CSP header.",
+      "alert": "Content Security Policy (CSP) Header Not Set",
+      "param": "",
+      "attack": "",
+      "name": "Content Security Policy (CSP) Header Not Set",
+      "risk": "Low",
+      "id": "2",
+      "alertRef": "10020-1"
+    }
+  ]
+}

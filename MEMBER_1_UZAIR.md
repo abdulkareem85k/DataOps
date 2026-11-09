@@ -162,3 +162,14 @@ cd backend
 .\.venv\Scripts\ruff.exe check app tests
 .\.venv\Scripts\ruff.exe format app tests
 ```
+
+---
+
+### Implementation Status: COMPLETED
+- **Prompt 4 (Adapter Framework & Nmap):** Complete (NmapAdapter, SSE events stream `/assessments/{id}/events`, tool-runs API `/assessments/{id}/tool-runs`, tests in `test_nmap_adapter.py`).
+- **Prompt 5 (Nikto & OWASP ZAP Live):** Complete (NiktoAdapter, ZapAdapter with passive scan default and active scan gating, tests in `test_nikto_adapter.py` and `test_zap_adapter.py`).
+- **Prompt 6 (Commercial Importers):** Complete (NessusImporter, OpenVasImporter, BurpImporter, multipart `/assessments/{id}/imports`, defusedxml XXE protection, out-of-scope host skipping & audit logging, safe samples in `lab/samples/`, tests in `test_importers.py`).
+- **Prompt 7 (Normalization, Deduplication & Correlation):** Complete (Finding normalization in `pipeline/normalize.py`, deduplication, multi-tool corroboration, cross-host separation, and FP heuristics in `pipeline/correlate.py`, tests in `test_pipeline.py`).
+- **Verification:** 21 Member 1 tests passing, 55 total backend tests passing, 17 runner tests passing. 100% clean ruff check & format.
+
+

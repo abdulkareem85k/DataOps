@@ -1,0 +1,29 @@
+{
+  "host": "172.30.0.10",
+  "ip": "172.30.0.10",
+  "port": 80,
+  "banner": "Apache/2.4.41 (Ubuntu)",
+  "vulnerabilities": [
+    {
+      "id": "000001",
+      "OSVDB": "3092",
+      "method": "GET",
+      "url": "/test/",
+      "msg": "This might be interesting... /test/ directory indexing found."
+    },
+    {
+      "id": "000002",
+      "OSVDB": "0",
+      "method": "GET",
+      "url": "/",
+      "msg": "The anti-clickjacking X-Frame-Options header is not present. CVE-2020-0001"
+    },
+    {
+      "id": "000003",
+      "OSVDB": "3233",
+      "method": "GET",
+      "url": "/icons/README",
+      "msg": "Apache default file found: /icons/README"
+    }
+  ]
+}

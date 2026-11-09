@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
+from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.models.orm import Assessment, ToolRun
@@ -52,6 +55,45 @@ def attach_tool_run_raw_output(
     row.sha256 = stored.sha256
     session.flush()
     return to_tool_run_read(row)
+
+
+def update_tool_run(
+    session: Session,
+    tool_run_id: str,
+    *,
+    status: str | None = None,
+    error: str | None = None,
+    started_at: datetime | None = None,
+    finished_at: datetime | None = None,
+) -> ToolRunRead:
+    """Update execution lifecycle details of a ToolRun."""
+    row = session.get(ToolRun, tool_run_id)
+    if row is None:
+        raise RecordNotFound("tool run not found")
+    if status is not None:
+        row.status = status
+    if error is not None:
+        row.error = error
+    if started_at is not None:
+        row.started_at = started_at
+    if finished_at is not None:
+        row.finished_at = finished_at
+    session.flush()
+    return to_tool_run_read(row)
+
+
+def list_tool_runs(session: Session, assessment_id: str) -> list[ToolRunRead]:
+    """Return all ToolRuns for an assessment ordered chronologically."""
+    rows = (
+        session.execute(
+            select(ToolRun)
+            .where(ToolRun.assessment_id == assessment_id)
+            .order_by(ToolRun.created_at.asc())
+        )
+        .scalars()
+        .all()
+    )
+    return [to_tool_run_read(r) for r in rows]
 
 
 def to_tool_run_read(row: ToolRun) -> ToolRunRead:

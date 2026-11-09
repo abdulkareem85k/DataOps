@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues burpVersion="2023.10" exportTime="1700000000">
+  <issue>
+    <serialNumber>1001</serialNumber>
+    <type>0x00100100</type>
+    <name>Cross-site scripting (reflected)</name>
+    <host ip="172.30.0.10">http://172.30.0.10</host>
+    <port>80</port>
+    <protocol>http</protocol>
+    <path>/search</path>
+    <location>/search?q=test</location>
+    <severity>High</severity>
+    <confidence>Certain</confidence>
+    <issueBackground>Cross-site scripting vulnerabilities arise when applications include untrusted data in web pages.</issueBackground>
+    <remediationBackground>Encode data on output and sanitize input.</remediationBackground>
+    <issueDetail>The value of the q request parameter is copied into the HTML response with no encoding.</issueDetail>
+    <remediationDetail>Context-aware output encoding should be used.</remediationDetail>
+    <requestresponse>
+      <request method="GET" url="http://172.30.0.10/search?q=test">&lt;script&gt;alert(1)&lt;/script&gt;</request>
+      <response status="200">&lt;div&gt;&lt;script&gt;alert(1)&lt;/script&gt;&lt;/div&gt;</response>
+    </requestresponse>
+  </issue>
+  <issue>
+    <serialNumber>1002</serialNumber>
+    <type>0x00200200</type>
+    <name>Out of Scope Burp Issue</name>
+    <host ip="192.168.99.100">http://192.168.99.100</host>
+    <port>80</port>
+    <protocol>http</protocol>
+    <path>/secret</path>
+    <location>/secret</location>
+    <severity>Medium</severity>
+    <confidence>Firm</confidence>
+    <issueDetail>Finding on an excluded target.</issueDetail>
+  </issue>
+</issues>

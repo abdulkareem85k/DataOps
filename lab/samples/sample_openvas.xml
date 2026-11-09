@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<report id="report-001" format_id="xml">
+  <results>
+    <result id="res-1">
+      <name>Apache Path Traversal Vulnerability</name>
+      <host>172.30.0.10</host>
+      <port>80/tcp</port>
+      <threat>High</threat>
+      <severity>7.5</severity>
+      <qod>
+        <value>80</value>
+        <type>remote_vul</type>
+      </qod>
+      <description>Apache HTTP Server 2.4.49/2.4.50 path traversal vulnerability.</description>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.146820">
+        <name>Apache HTTP Server Path Traversal</name>
+        <cve>CVE-2021-41773</cve>
+        <cvss_base>7.5</cvss_base>
+      </nvt>
+      <solution>Update to the latest version of Apache HTTP Server.</solution>
+    </result>
+    <result id="res-2">
+      <name>Out of Scope Target Result</name>
+      <host>10.99.99.99</host>
+      <port>8080/tcp</port>
+      <threat>Medium</threat>
+      <severity>5.0</severity>
+      <description>Finding on an out-of-scope host.</description>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.999999">
+        <name>Generic Test NVT</name>
+      </nvt>
+    </result>
+  </results>
+</report>

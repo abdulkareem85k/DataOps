@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<nmaprun scanner="nmap" args="nmap -sV -oX - 172.30.0.10" start="1700000000" version="7.94">
+  <scaninfo type="syn" protocol="tcp" numservices="100" services="1-100"/>
+  <host starttime="1700000001" endtime="1700000010">
+    <status state="up" reason="arp-response"/>
+    <address addr="172.30.0.10" addrtype="ipv4"/>
+    <hostnames>
+      <hostname name="target.lab" type="PTR"/>
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="22">
+        <state state="open" reason="syn-ack"/>
+        <service name="ssh" product="OpenSSH" version="8.2p1" extrainfo="Ubuntu-4ubuntu0.5" method="probed" conf="10"/>
+      </port>
+      <port protocol="tcp" portid="80">
+        <state state="open" reason="syn-ack"/>
+        <service name="http" product="Apache httpd" version="2.4.41" extrainfo="(Ubuntu)" method="probed" conf="10"/>
+        <script id="http-server-header" output="Apache/2.4.41 (Ubuntu)"/>
+        <script id="http-vuln-cve2021-41773" output="Vulnerable: Path traversal in Apache 2.4.41 CVE-2021-41773"/>
+      </port>
+      <port protocol="tcp" portid="443">
+        <state state="closed" reason="reset"/>
+        <service name="https" method="table" conf="3"/>
+      </port>
+    </ports>
+  </host>
+</nmaprun>
