@@ -77,6 +77,9 @@ def create_app(
     def root() -> str:
         return "AI Unified VAPT Agent API"
 
+    from app.api.agent import router as agent_router
+    from app.api.approvals import router as approvals_router
+    from app.api.findings import router as findings_router
     from app.api.imports import router as imports_router
     from app.api.scope import router as scope_router
     from app.api.tool_runs import router as tool_runs_router
@@ -84,6 +87,9 @@ def create_app(
     app.include_router(scope_router)
     app.include_router(tool_runs_router)
     app.include_router(imports_router)
+    app.include_router(findings_router)
+    app.include_router(agent_router)
+    app.include_router(approvals_router)
 
     return app
 

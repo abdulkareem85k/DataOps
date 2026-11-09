@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Any
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session, selectinload, sessionmaker
@@ -315,6 +316,146 @@ def to_finding_read(row: Finding) -> FindingRead:
     )
 
 
+def list_findings(
+    session: Session,
+    assessment_id: str,
+    sort: str = "risk",
+    severity: str | None = None,
+    status: str | None = None,
+    asset_id: str | None = None,
+    tool: str | None = None,
+) -> list[FindingRead]:
+    """List findings for an assessment with filtering and sorting."""
+    statement = (
+        select(Finding)
+        .where(Finding.assessment_id == assessment_id)
+        .options(
+            selectinload(Finding.sources).selectinload(FindingSource.tool_run),
+            selectinload(Finding.evidence),
+        )
+    )
+    if severity is not None:
+        statement = statement.where(Finding.tool_severity == severity)
+    if status is not None:
+        statement = statement.where(Finding.status == status)
+    if asset_id is not None:
+        statement = statement.where(Finding.asset_id == asset_id)
+
+    rows = list(session.scalars(statement).all())
+
+    # In-memory filter for tool if specified
+    if tool is not None:
+        rows = [r for r in rows if tool in (r.source_tools or [])]
+
+    # Sorting
+    if sort == "risk":
+        rows = sorted(rows, key=lambda r: r.risk_score or 0.0, reverse=True)
+    elif sort == "severity":
+        sev_rank = {"critical": 5, "high": 4, "medium": 3, "low": 2, "info": 1}
+        rows = sorted(
+            rows,
+            key=lambda r: sev_rank.get((r.tool_severity or "").lower(), 0),
+            reverse=True,
+        )
+    elif sort == "first_seen":
+        rows = sorted(rows, key=lambda r: r.first_seen, reverse=True)
+
+    return [to_finding_read(r) for r in rows]
+
+
+def update_finding(
+    session: Session,
+    finding_id: str,
+    *,
+    status: str | None = None,
+    validation_status: str | None = None,
+    confidence: str | None = None,
+    confidence_score: float | None = None,
+    risk_score: float | None = None,
+    risk_band: str | None = None,
+    risk_breakdown: dict[str, Any] | None = None,
+    risk_rationale: str | None = None,
+    inference_evidence: str | None = None,
+) -> FindingRead:
+    """Update finding lifecycle fields, risk scores, or append inference evidence."""
+    statement = (
+        select(Finding)
+        .where(Finding.id == finding_id)
+        .options(
+            selectinload(Finding.sources).selectinload(FindingSource.tool_run),
+            selectinload(Finding.evidence),
+        )
+    )
+    row = session.scalar(statement)
+    if row is None:
+        raise RecordNotFound("finding not found")
+
+    if status is not None:
+        row.status = status
+    if validation_status is not None:
+        row.validation_status = validation_status
+    if confidence is not None:
+        row.confidence = confidence
+    if confidence_score is not None:
+        row.confidence_score = confidence_score
+    if risk_score is not None:
+        row.risk_score = risk_score
+    if risk_band is not None:
+        row.risk_band = risk_band
+    if risk_breakdown is not None:
+        row.risk_breakdown = risk_breakdown
+    if risk_rationale is not None:
+        row.risk_rationale = risk_rationale
+
+    if inference_evidence:
+        from datetime import UTC, datetime
+
+        ev = Evidence(
+            id=new_id("EVD"),
+            finding_id=row.id,
+            type="inference",
+            content=inference_evidence,
+            timestamp=datetime.now(UTC),
+        )
+        session.add(ev)
+        session.flush()
+
+    session.flush()
+    return to_finding_read(row)
+
+
+def get_findings_summary(session: Session, assessment_id: str) -> dict[str, Any]:
+    """Return aggregated severity, risk band, and status metrics."""
+    findings = list_findings(session, assessment_id)
+    severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
+    risk_bands = {"P1 Critical": 0, "P2 High": 0, "P3 Medium": 0, "P4 Low": 0, "P5 Info": 0}
+    status_counts = {
+        "confirmed": 0,
+        "suspected": 0,
+        "likely_false_positive": 0,
+        "false_positive": 0,
+        "accepted_risk": 0,
+    }
+
+    for f in findings:
+        sev = (f.tool_severity or "info").lower()
+        if sev in severity_counts:
+            severity_counts[sev] += 1
+        band = f.risk_band or "P5 Info"
+        if band in risk_bands:
+            risk_bands[band] += 1
+        st = f.status.lower()
+        if st in status_counts:
+            status_counts[st] += 1
+
+    return {
+        "total_findings": len(findings),
+        "severities": severity_counts,
+        "risk_bands": risk_bands,
+        "statuses": status_counts,
+    }
+
+
 class FindingRepository:
     """Session-factory wrapper used by existing services."""
 
@@ -329,3 +470,48 @@ class FindingRepository:
     def get(self, finding_id: str) -> FindingRead:
         with self.sessions() as session:
             return get_finding(session, finding_id)
+
+    def list(
+        self,
+        assessment_id: str,
+        sort: str = "risk",
+        severity: str | None = None,
+        status: str | None = None,
+        asset_id: str | None = None,
+        tool: str | None = None,
+    ) -> list[FindingRead]:
+        with self.sessions() as session:
+            return list_findings(session, assessment_id, sort, severity, status, asset_id, tool)
+
+    def update(
+        self,
+        finding_id: str,
+        *,
+        status: str | None = None,
+        validation_status: str | None = None,
+        confidence: str | None = None,
+        confidence_score: float | None = None,
+        risk_score: float | None = None,
+        risk_band: str | None = None,
+        risk_breakdown: dict[str, Any] | None = None,
+        risk_rationale: str | None = None,
+        inference_evidence: str | None = None,
+    ) -> FindingRead:
+        with self.sessions.begin() as session:
+            return update_finding(
+                session,
+                finding_id,
+                status=status,
+                validation_status=validation_status,
+                confidence=confidence,
+                confidence_score=confidence_score,
+                risk_score=risk_score,
+                risk_band=risk_band,
+                risk_breakdown=risk_breakdown,
+                risk_rationale=risk_rationale,
+                inference_evidence=inference_evidence,
+            )
+
+    def summary(self, assessment_id: str) -> dict[str, Any]:
+        with self.sessions() as session:
+            return get_findings_summary(session, assessment_id)

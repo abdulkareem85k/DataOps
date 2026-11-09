@@ -19,7 +19,14 @@ from app.repo.common import (
     RecordNotFound,
     RepositoryError,
 )
-from app.repo.findings import FindingRepository, create_finding, get_finding
+from app.repo.findings import (
+    FindingRepository,
+    create_finding,
+    get_finding,
+    get_findings_summary,
+    list_findings,
+    update_finding,
+)
 from app.repo.scope import get_scope_rules, upsert_scope_rules
 from app.repo.tool_runs import (
     ToolRunRepository,
@@ -49,14 +56,17 @@ __all__ = [
     "get_assessment",
     "get_asset",
     "get_finding",
+    "get_findings_summary",
     "get_or_create_asset",
     "get_or_create_service",
     "get_scope_rules",
     "get_service",
     "get_tool_run",
     "list_assets",
+    "list_findings",
     "list_services",
     "list_tool_runs",
+    "update_finding",
     "update_tool_run",
     "upsert_scope_rules",
     "verify_chain",

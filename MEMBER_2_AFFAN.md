@@ -168,3 +168,30 @@ cd backend
 .\.venv\Scripts\ruff.exe format app tests
 ```
 
+---
+
+## 4. Completion Sign-Off & Verification (Status: Complete)
+
+- [x] **Prompt 8 (Risk Prioritization):**
+  - Deterministic risk engine created in `backend/app/pipeline/risk.py`.
+  - Composite scoring (0-100) and priority bands (`P1 Critical` to `P5 Info`).
+  - Breakdown JSON (`risk_breakdown`) and plain-English explanation (`risk_rationale`).
+  - Dynamic re-ranking on asset criticality adjustment in `backend/app/repo/findings.py`.
+  - REST endpoints created in `backend/app/api/findings.py`.
+  - Unit tests in `backend/tests/test_risk_engine.py` (4 passed).
+- [x] **Prompt 9 (AI Agent: Planner, Orchestrator & Reasoning):**
+  - Provider-neutral LLM client with `MockLLMClient` & `OpenAICompatibleClient` in `backend/app/agent/client.py`.
+  - Typed agent tools with strict scope validation & audit logging in `backend/app/agent/tools.py`.
+  - State machine orchestrator with Dedup Guard in `backend/app/agent/orchestrator.py`.
+  - Grounding validator & untrusted input wrapper in `backend/app/agent/validation.py`.
+  - Chat/stream and plan approval REST APIs in `backend/app/api/agent.py`.
+  - Unit tests in `backend/tests/test_agent.py` (4 passed).
+- [x] **Prompt 10 (Human Approval Gate & Metasploit Check):**
+  - Approval service with single-use, 15-minute TTL tokens in `backend/app/approvals/service.py`.
+  - Metasploit adapter enforcing active validation setting & approval tokens in `backend/app/adapters/metasploit.py`.
+  - Approvals REST API in `backend/app/api/approvals.py`.
+  - Unit tests in `backend/tests/test_approvals.py` (6 passed).
+- [x] **Linting & Code Quality:** 100% clean with Ruff (0 errors, 0 warnings).
+- [x] **Total Backend Tests:** 69 passing.
+
+
