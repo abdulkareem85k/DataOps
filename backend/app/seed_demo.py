@@ -256,7 +256,7 @@ def seed_demo_data() -> str:
             first_seen=NOW,
             last_seen=NOW,
         )
-        create_finding(session, fc1, data_dir=store.data_dir)
+        finding_apache = create_finding(session, fc1, data_dir=store.data_dir)
 
         # Finding 2: SQL Injection
         fc2 = FindingCreate(
@@ -317,6 +317,19 @@ def seed_demo_data() -> str:
             last_seen=NOW,
         )
         create_finding(session, fc2, data_dir=store.data_dir)
+
+        # 5b. Human Approval Request for Active Validation
+        from app.approvals.service import create_approval_request
+        create_approval_request(
+            session=session,
+            assessment_id=asm_id,
+            finding_id=finding_apache.id,
+            tool="metasploit",
+            target="172.30.0.20:80",
+            params={"RHOSTS": "172.30.0.20", "RPORT": 80, "TARGETURI": "/cgi-bin/.%2e/%2e%2e/etc/passwd"},
+            justification="Confirm unauthenticated file read capability via harmless read-only proof on test lab.",
+            risk="Active exploit execution against lab host. Requires human authorization.",
+        )
 
     # 6. Recalculate Risk Engine
     with sessions.begin() as session:
