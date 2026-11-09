@@ -12,7 +12,7 @@ from app.repo.assets import (
     list_assets,
     list_services,
 )
-from app.repo.audit import append_audit_event, verify_chain
+from app.repo.audit import append_audit_event, list_audit_events, verify_chain
 from app.repo.common import (
     ImmutableRawOutputError,
     InvalidRecordReference,
@@ -63,6 +63,7 @@ __all__ = [
     "get_service",
     "get_tool_run",
     "list_assets",
+    "list_audit_events",
     "list_findings",
     "list_services",
     "list_tool_runs",

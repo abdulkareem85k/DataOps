@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vulnerability Assessment &amp; Penetration Testing (VAPT) Report - {{ assessment.name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm 20mm 15mm;
+            @bottom-right {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 8pt;
+                color: #64748b;
+            }
+            @bottom-left {
+                content: "CONFIDENTIAL - AI VAPT AGENT REPORT";
+                font-size: 8pt;
+                color: #64748b;
+            }
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.5;
+            color: #1e293b;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+        .cover-page {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border-bottom: 4px solid #3b82f6;
+            padding: 40px 20px;
+        }
+        .cover-badge {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            font-weight: 700;
+            font-size: 11pt;
+            letter-spacing: 1.5px;
+            padding: 6px 16px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            border: 1px solid #bfdbfe;
+        }
+        .cover-title {
+            font-size: 26pt;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0 0 12px 0;
+            line-height: 1.2;
+        }
+        .cover-subtitle {
+            font-size: 14pt;
+            color: #475569;
+            margin: 0 0 40px 0;
+        }
+        .cover-meta {
+            margin-top: 60px;
+            font-size: 10pt;
+            color: #64748b;
+            text-align: center;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 16pt;
+            font-weight: 700;
+            color: #0f172a;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 6px;
+            margin-top: 30px;
+            margin-bottom: 16px;
+        }
+        h3 {
+            font-size: 12pt;
+            font-weight: 600;
+            color: #1e293b;
+            margin-top: 18px;
+            margin-bottom: 8px;
+        }
+        p {
+            margin: 0 0 10px 0;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px 16px;
+        }
+        .summary-label {
+            font-size: 8pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .summary-value {
+            font-size: 12pt;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .narrative-box {
+            background-color: #f1f5f9;
+            border-left: 4px solid #3b82f6;
+            padding: 14px 18px;
+            margin: 16px 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .narrative-box h3 {
+            margin-top: 0;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 14px 0;
+            font-size: 9pt;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #cbd5e1;
+            padding: 8px 10px;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+            color: #334155;
+        }
+        .row-critical td { background-color: #fef2f2; }
+        .row-high td { background-color: #fff7ed; }
+        .row-medium td { background-color: #fefce8; }
+        .row-low td { background-color: #f0fdf4; }
+        .row-info td { background-color: #f8fafc; }
+        .finding-card {
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+            background-color: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .severity-border-critical { border-left: 6px solid #ef4444; }
+        .severity-border-high { border-left: 6px solid #f97316; }
+        .severity-border-medium { border-left: 6px solid #eab308; }
+        .severity-border-low { border-left: 6px solid #22c55e; }
+        .severity-border-info { border-left: 6px solid #64748b; }
+        .finding-header {
+            background-color: #f8fafc;
+            padding: 10px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .finding-id {
+            font-family: monospace;
+            font-weight: 700;
+            color: #334155;
+        }
+        .finding-title {
+            font-weight: 700;
+            font-size: 11pt;
+            flex-grow: 1;
+            color: #0f172a;
+        }
+        .badge {
+            font-size: 7.5pt;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .badge-critical { background-color: #ef4444; color: #ffffff; }
+        .badge-high { background-color: #f97316; color: #ffffff; }
+        .badge-medium { background-color: #eab308; color: #000000; }
+        .badge-low { background-color: #22c55e; color: #ffffff; }
+        .badge-info { background-color: #64748b; color: #ffffff; }
+        .badge-risk { background-color: #1e293b; color: #ffffff; }
+        .meta-table {
+            width: 100%;
+            font-size: 8.5pt;
+            margin: 8px 0;
+            border-collapse: collapse;
+        }
+        .meta-table td {
+            padding: 4px 10px;
+            border: none;
+        }
+        .meta-label {
+            font-weight: 600;
+            color: #64748b;
+            width: 15%;
+        }
+        .meta-val {
+            color: #1e293b;
+            width: 35%;
+        }
+        .finding-body {
+            padding: 12px 14px;
+        }
+        .evidence-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 14px 0;
+        }
+        .evidence-observed {
+            border: 1px solid #93c5fd;
+            border-radius: 6px;
+            background-color: #f8fafc;
+            overflow: hidden;
+        }
+        .observed-header {
+            background-color: #eff6ff;
+            border-bottom: 1px solid #93c5fd;
+            padding: 6px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .evidence-tag {
+            font-weight: 800;
+            font-size: 8pt;
+            letter-spacing: 0.5px;
+            color: #1d4ed8;
+        }
+        .evidence-sub {
+            font-size: 7.5pt;
+            color: #64748b;
+        }
+        .evidence-inference {
+            border: 1px solid #c4b5fd;
+            border-radius: 6px;
+            background-color: #faf5ff;
+            overflow: hidden;
+        }
+        .inference-header {
+            background-color: #f5f3ff;
+            border-bottom: 1px solid #c4b5fd;
+            padding: 6px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .evidence-inference .evidence-tag {
+            color: #6d28d9;
+        }
+        .evidence-content {
+            padding: 10px 12px;
+        }
+        .raw-snippet {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 8pt;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin: 0 0 8px 0;
+        }
+        .trace-info {
+            font-size: 7.5pt;
+            color: #64748b;
+        }
+        .remediation-box {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-top: 12px;
+        }
+        .remediation-box h4 {
+            margin: 0 0 6px 0;
+            color: #166534;
+            font-size: 9.5pt;
+        }
+        .audit-verification-banner {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin: 14px 0;
+            font-size: 9.5pt;
+        }
+        .audit-verification-banner.verified {
+            background-color: #f0fdf4;
+            border: 1px solid #86efac;
+            color: #166534;
+        }
+        .audit-verification-banner.unverified {
+            background-color: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+        .banner-title {
+            font-weight: 700;
+            font-size: 10.5pt;
+            margin-bottom: 4px;
+        }
+        .disclaimer-box {
+            background-color: #fffbeb;
+            border: 1px solid #fde68a;
+            padding: 12px 14px;
+            border-radius: 6px;
+            font-size: 8pt;
+            color: #92400e;
+            margin-top: 16px;
+        }
+        .mode-badge {
+            font-size: 7.5pt;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+        .mode-live { background-color: #dcfce7; color: #166534; }
+        .mode-import-only { background-color: #e0f2fe; color: #075985; }
+        .mode-planned { background-color: #fef3c7; color: #92400e; }
+    </style>
+</head>
+<body>
+
+    <div class="cover-page">
+        <div class="cover-badge">VAPT Final Assessment Report</div>
+        <h1 class="cover-title">{{ assessment.name }}</h1>
+        <div class="cover-subtitle">Automated Vulnerability Assessment &amp; Penetration Testing Execution</div>
+        <div class="cover-meta">
+            <p><strong>Generated At:</strong> {{ generated_at }}</p>
+            <p><strong>Assessment ID:</strong> <code>{{ assessment.id }}</code></p>
+            <p><strong>Security Classification:</strong> STRICTLY CONFIDENTIAL - RESTRICTED DISTRIBUTION</p>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Section 1: Executive Summary -->
+    {% include 'components/executive_summary.html.jinja2' %}
+
+    <div class="page-break"></div>
+
+    <!-- Section 2: Assessment Methodology & Tool Execution -->
+    <section class="section" id="methodology">
+        <h2 class="section-title">2. Assessment Methodology &amp; Scope</h2>
+        <p>The assessment followed a deterministic, multi-stage testing methodology in alignment with NIST SP 800-115 and the rules of engagement defined prior to scan initialization.</p>
+        
+        <h3>Authorized In-Scope Targets</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Rule Pattern</th>
+                    <th>Target Type</th>
+                    <th>Action</th>
+                    <th>Asset Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rule in scope_rules %}
+                <tr>
+                    <td><code>{{ rule.pattern }}</code></td>
+                    <td>{{ rule.target_type }}</td>
+                    <td><span class="mode-badge mode-live">{{ rule.action }}</span></td>
+                    <td>{{ assets | length }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>Tool Execution Summary Table</h3>
+        <p>Record of all automated scanner invocations and raw imports performed during this assessment:</p>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Tool</th>
+                    <th>Execution Mode</th>
+                    <th>Status</th>
+                    <th>Started At</th>
+                    <th>Finished At</th>
+                    <th>Source / Raw Output Reference</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tr in tool_runs %}
+                <tr>
+                    <td><strong>{{ tr.tool }}</strong></td>
+                    <td>{{ tr.mode }}</td>
+                    <td>{{ tr.status }}</td>
+                    <td>{{ tr.started_at or 'N/A' }}</td>
+                    <td>{{ tr.finished_at or 'N/A' }}</td>
+                    <td><code>{{ tr.raw_output_path or tr.source_filename or 'Captured artifact' }}</code></td>
+                </tr>
+                {% endfor %}
+                {% if not tool_runs %}
+                <tr>
+                    <td colspan="6">No scanner tool runs recorded in this assessment.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Section 3: Severity Distribution -->
+    <section class="section" id="severity-distribution">
+        <h2 class="section-title">3. Prioritized Risk &amp; Severity Distribution</h2>
+        <p>Findings are mathematically prioritized using composite risk scoring (0-100) combining CVSS base scores, asset criticality factors, and multi-tool correlation confidence.</p>
+        
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Finding ID</th>
+                    <th>Title</th>
+                    <th>Severity</th>
+                    <th>Risk Band</th>
+                    <th>Risk Score</th>
+                    <th>Target</th>
+                    <th>Confidence</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in findings %}
+                <tr class="row-{{ f.severity | lower }}">
+                    <td><code>{{ f.id }}</code></td>
+                    <td><strong>{{ f.title }}</strong></td>
+                    <td>{{ f.severity | upper }}</td>
+                    <td>{{ f.risk_band or 'N/A' }}</td>
+                    <td>{{ f.risk_score or 0 }}/100</td>
+                    <td>{{ f.target_asset or 'N/A' }}</td>
+                    <td>{{ (f.confidence * 100) | round | int }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- Section 4: Detailed Vulnerability Findings -->
+    {% include 'components/findings_detail.html.jinja2' %}
+
+    <div class="page-break"></div>
+
+    <!-- Section 5: Impact and Remediation -->
+    <section class="section" id="impact-remediation">
+        <h2 class="section-title">5. Strategic Impact &amp; Remediation Guidance</h2>
+        <p>Identified vulnerabilities present varying degrees of risk to the organization. Remediation should follow a prioritized approach based on calculated risk score:</p>
+        
+        <ol>
+            <li><strong>Immediate (24-48 Hours):</strong> Address all <code>P1 Critical</code> and <code>P2 High</code> findings directly affecting internet-facing services or containing known remote code execution vectors.</li>
+            <li><strong>Short-Term (1-2 Weeks):</strong> Remediate <code>P3 Medium</code> misconfigurations, unauthenticated headers, and outdated software versions.</li>
+            <li><strong>Long-Term / Baseline:</strong> Address <code>P4 Low</code> and <code>P5 Info</code> findings as part of routine configuration hardening and defense-in-depth reviews.</li>
+        </ol>
+    </section>
+
+    <!-- Section 6: Assessment Limitations -->
+    <section class="section" id="limitations">
+        <h2 class="section-title">6. Assessment Limitations &amp; Approvals</h2>
+        <p>This assessment represents a point-in-time evaluation based on automated tooling and controlled validation:</p>
+        <ul>
+            <li><strong>Scoping Boundaries:</strong> Testing was restricted strictly to targets authorized in the Rules of Engagement. Out-of-scope targets were rejected by the deterministic scope engine.</li>
+            <li><strong>Safe Execution Policy:</strong> Destructive exploits, denial-of-service payloads, and high-risk validation required explicit human authorization.</li>
+            <li><strong>Recorded Approvals:</strong> Total approval requests: {{ approvals | length }}.</li>
+        </ul>
+    </section>
+
+    <!-- Section 7: Appendices -->
+    {% include 'components/audit_appendix.html.jinja2' %}
+
+</body>
+</html>

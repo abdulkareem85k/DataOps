@@ -79,8 +79,11 @@ def create_app(
 
     from app.api.agent import router as agent_router
     from app.api.approvals import router as approvals_router
+    from app.api.audit import audit_router
     from app.api.findings import router as findings_router
     from app.api.imports import router as imports_router
+    from app.api.integrations import integrations_router
+    from app.api.reports import reports_router
     from app.api.scope import router as scope_router
     from app.api.tool_runs import router as tool_runs_router
 
@@ -90,6 +93,9 @@ def create_app(
     app.include_router(findings_router)
     app.include_router(agent_router)
     app.include_router(approvals_router)
+    app.include_router(reports_router)
+    app.include_router(audit_router)
+    app.include_router(integrations_router)
 
     return app
 

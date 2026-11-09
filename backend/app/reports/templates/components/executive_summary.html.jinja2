@@ -1,0 +1,73 @@
+<section class="section" id="executive-summary">
+    <h2 class="section-title">1. Executive Summary</h2>
+    
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="summary-label">Assessment Name</div>
+            <div class="summary-value">{{ assessment.name }}</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Target Environment</div>
+            <div class="summary-value">{{ scope_rules | length }} In-Scope Rules ({{ assets | length }} Discovered Assets)</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Overall Risk Posture</div>
+            <div class="summary-value risk-badge-{{ summary.max_risk_band | lower | replace(' ', '-') }}">
+                {{ summary.overall_posture or "Moderate Risk" }}
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Total Correlated Findings</div>
+            <div class="summary-value">{{ summary.total_findings }}</div>
+        </div>
+    </div>
+
+    <div class="narrative-box">
+        <h3>Assessment Scope Overview & Key Findings</h3>
+        <p>{{ executive_narrative }}</p>
+    </div>
+
+    <h3>Severity Distribution</h3>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Priority Band</th>
+                <th>Severity</th>
+                <th>Count</th>
+                <th>% of Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="row-critical">
+                <td><strong>P1 Critical</strong></td>
+                <td>Critical</td>
+                <td>{{ summary.critical_count }}</td>
+                <td>{{ "%.1f" | format(summary.critical_pct) }}%</td>
+            </tr>
+            <tr class="row-high">
+                <td><strong>P2 High</strong></td>
+                <td>High</td>
+                <td>{{ summary.high_count }}</td>
+                <td>{{ "%.1f" | format(summary.high_pct) }}%</td>
+            </tr>
+            <tr class="row-medium">
+                <td><strong>P3 Medium</strong></td>
+                <td>Medium</td>
+                <td>{{ summary.medium_count }}</td>
+                <td>{{ "%.1f" | format(summary.medium_pct) }}%</td>
+            </tr>
+            <tr class="row-low">
+                <td><strong>P4 Low</strong></td>
+                <td>Low</td>
+                <td>{{ summary.low_count }}</td>
+                <td>{{ "%.1f" | format(summary.low_pct) }}%</td>
+            </tr>
+            <tr class="row-info">
+                <td><strong>P5 Info</strong></td>
+                <td>Informational</td>
+                <td>{{ summary.info_count }}</td>
+                <td>{{ "%.1f" | format(summary.info_pct) }}%</td>
+            </tr>
+        </tbody>
+    </table>
+</section>

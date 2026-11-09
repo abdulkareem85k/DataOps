@@ -1,175 +1,232 @@
 import { useEffect, useState } from 'react';
-
-type HealthState = 'checking' | 'online' | 'offline';
-
-type ServiceStatus = {
-  name: string;
-  detail: string;
-  state: 'Live' | 'Planned' | 'Disabled';
-  mark: string;
-};
-
-const services: ServiceStatus[] = [
-  {
-    name: 'Backend API',
-    detail: 'Health endpoint responds from the application service.',
-    state: 'Live',
-    mark: 'API',
-  },
-  {
-    name: 'Scanner runner',
-    detail: 'Nmap/Nikto endpoints are lab-scoped and bearer-protected.',
-    state: 'Planned',
-    mark: 'RUN',
-  },
-  {
-    name: 'ZAP daemon',
-    detail: 'Compose service is pinned; active scanning stays disabled.',
-    state: 'Planned',
-    mark: 'ZAP',
-  },
-];
-
-function StatePill({ state }: { state: string }) {
-  return <span className={`state-pill state-${state.toLowerCase()}`}>{state}</span>;
-}
+import {
+  abortAssessment,
+  fetchApprovals,
+  fetchAuditEvents,
+  fetchFindings,
+  fetchHealth,
+} from './api';
+import { ApprovalQueue } from './components/ApprovalQueue';
+import { AuditExplorer } from './components/AuditExplorer';
+import { IntegrationsMatrix } from './components/IntegrationsMatrix';
+import { NewAssessmentModal } from './components/NewAssessmentModal';
+import { ReportView } from './components/ReportView';
+import { Sidebar } from './components/Sidebar';
+import { TopBar } from './components/TopBar';
+import { Workspace } from './components/Workspace';
+import { Approval, AuditEvent, Finding, HealthState } from './types';
 
 export default function App() {
+  const [currentTab, setCurrentTab] = useState('workspace');
   const [health, setHealth] = useState<HealthState>('checking');
+  const [activeAssessmentId, setActiveAssessmentId] = useState<string>('ASM-DEMO-001');
+  const [findings, setFindings] = useState<Finding[]>([]);
+  const [approvals, setApprovals] = useState<Approval[]>([]);
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+  const [bannerNotice, setBannerNotice] = useState<string | null>(null);
 
+  // Poll health and assessment data
   useEffect(() => {
-    let active = true;
-    fetch('/health', { headers: { Accept: 'text/plain' } })
-      .then((response) => {
-        if (!response.ok) throw new Error('Health check failed');
-        return response.text();
-      })
-      .then((body) => {
-        if (active) setHealth(body.trim() === 'OK' ? 'online' : 'offline');
-      })
-      .catch(() => {
-        if (active) setHealth('offline');
-      });
-    return () => {
-      active = false;
-    };
+    fetchHealth().then((ok) => setHealth(ok ? 'online' : 'offline'));
   }, []);
 
+  const refreshData = async (asmId: string) => {
+    if (!asmId) return;
+    try {
+      const [fnds, apprs, audits] = await Promise.all([
+        fetchFindings(asmId).catch(() => []),
+        fetchApprovals(asmId).catch(() => []),
+        fetchAuditEvents(asmId).catch(() => []),
+      ]);
+      setFindings(fnds);
+      setApprovals(apprs);
+      setAuditEvents(audits);
+    } catch {}
+  };
+
+  useEffect(() => {
+    refreshData(activeAssessmentId);
+  }, [activeAssessmentId]);
+
+  // Emergency Stop Handler
+  const handleEmergencyStop = async () => {
+    if (!activeAssessmentId || isStopping) return;
+    setIsStopping(true);
+    try {
+      const res = await abortAssessment(activeAssessmentId);
+      setBannerNotice(res.message);
+      refreshData(activeAssessmentId);
+    } catch (err: any) {
+      setBannerNotice(`Emergency abort: ${err.message || 'Signal dispatched'}`);
+    } finally {
+      setIsStopping(false);
+    }
+  };
+
+  const handleRequestValidation = (finding: Finding) => {
+    // Add pending validation request and switch to approvals tab
+    const newApproval: Approval = {
+      id: `APR-${Date.now().toString().slice(-4)}`,
+      assessment_id: activeAssessmentId,
+      action: JSON.stringify({
+        finding_id: finding.id,
+        tool: 'metasploit',
+        target: finding.target_asset || finding.asset_id,
+        params: { module: 'exploit/multi/http/apache_normalize_path_rce' },
+        justification: `Verify exploitability of ${finding.title} safely.`,
+        risk: 'high',
+      }),
+      action_detail: {
+        finding_id: finding.id,
+        tool: 'metasploit',
+        target: finding.target_asset || finding.asset_id,
+        params: { module: 'exploit/multi/http/apache_normalize_path_rce' },
+        justification: `Verify exploitability of ${finding.title} safely.`,
+        risk: 'high',
+      },
+      status: 'pending',
+    };
+    setApprovals((prev) => [newApproval, ...prev]);
+    setCurrentTab('approvals');
+  };
+
+  const pendingApprovalsCount = approvals.filter((a) => a.status === 'pending').length;
+
   return (
-    <div className="app-shell min-h-screen">
-      <aside className="sidebar">
-        <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </div>
-          <div>
-            <p className="brand-name">VAPT / AGENT</p>
-            <p className="brand-caption">ASSESSMENT WORKSPACE</p>
-          </div>
-        </div>
+    <div className="app-shell min-h-screen bg-slate-100 flex text-slate-800">
+      {/* Sidebar */}
+      <Sidebar
+        currentTab={currentTab}
+        onSelectTab={(tab) => setCurrentTab(tab)}
+        pendingApprovalsCount={pendingApprovalsCount}
+      />
 
-        <div className="workspace-label">WORKSPACE</div>
-        <nav aria-label="Primary navigation">
-          <a className="nav-link nav-link-active" href="#overview" aria-current="page">
-            <span className="nav-index">01</span> Overview
-          </a>
-          <span className="nav-link nav-link-muted" aria-disabled="true">
-            <span className="nav-index">02</span> Assessments <span className="soon-mark">NEXT</span>
-          </span>
-          <span className="nav-link nav-link-muted" aria-disabled="true">
-            <span className="nav-index">03</span> Findings <span className="soon-mark">NEXT</span>
-          </span>
-          <span className="nav-link nav-link-muted" aria-disabled="true">
-            <span className="nav-index">04</span> Audit trail <span className="soon-mark">NEXT</span>
-          </span>
-        </nav>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <TopBar
+          currentTab={currentTab}
+          health={health}
+          activeAssessmentId={activeAssessmentId}
+          onNewAssessment={() => setIsModalOpen(true)}
+          onEmergencyStop={handleEmergencyStop}
+          isStopping={isStopping}
+        />
 
-        <div className="sidebar-bottom">
-          <div className="scope-mini-label">SCOPE MODE</div>
-          <div className="scope-mini-value"><span className="scope-dot" /> INTERNAL LAB ONLY</div>
-          <p>Public destinations are blocked by default.</p>
-          <div className="sidebar-version">FOUNDATION / 0.1</div>
-        </div>
-      </aside>
+        {bannerNotice && (
+          <div className="bg-red-600 text-white text-xs px-4 py-2 flex justify-between items-center font-mono">
+            <span>🚨 {bannerNotice}</span>
+            <button
+              type="button"
+              onClick={() => setBannerNotice(null)}
+              className="text-white hover:text-slate-200 font-bold"
+            >
+              &times;
+            </button>
+          </div>
+        )}
 
-      <main className="main-content" id="overview">
-        <header className="topbar">
-          <div className="breadcrumb"><span>WORKSPACE</span><span className="breadcrumb-slash">/</span> Overview</div>
-          <div className="topbar-right">
-            <span className="milestone-label">MILESTONE A</span>
-            <span className="topbar-divider" />
-            <span className="health-indicator"><i className={`health-dot health-${health}`} /> API {health.toUpperCase()}</span>
-          </div>
-        </header>
-
-        <section className="page-heading">
-          <div>
-            <p className="eyebrow">AUTHORIZED ASSESSMENT · CONTROL PLANE</p>
-            <h1>Lab overview</h1>
-            <p className="heading-copy">A scoped workspace for evidence-led security testing.</p>
-          </div>
-          <div className="heading-stamp">
-            <span className="stamp-top">CURRENT PHASE</span>
-            <strong>FOUNDATION</strong>
-            <span className="stamp-bottom">PROMPT 1 / 14</span>
-          </div>
-        </section>
-
-        <section className="notice-panel" aria-label="Safety boundary">
-          <div className="notice-symbol" aria-hidden="true">S</div>
-          <div className="notice-copy">
-            <strong>Scope boundary is enforced in code.</strong>
-            <p>Targets must be literal IPv4 addresses inside the configured private lab CIDR. Approval never expands scope.</p>
-          </div>
-          <StatePill state="Live" />
-        </section>
-
-        <section className="section-block">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">SERVICE POSTURE</p>
-              <h2>Foundation services</h2>
-            </div>
-            <span className="section-note">STATUS IS VERIFIED OR CLEARLY MARKED</span>
-          </div>
-          <div className="service-list">
-            {services.map((service, index) => (
-              <article className="service-row" key={service.name}>
-                <div className="service-number">0{index + 1}</div>
-                <div className="service-mark">{service.mark}</div>
-                <div className="service-copy">
-                  <h3>{service.name}</h3>
-                  <p>{service.detail}</p>
+        <div className="flex-1 overflow-auto">
+          {currentTab === 'overview' && (
+            <div className="p-8 max-w-5xl mx-auto space-y-6">
+              <div className="page-heading">
+                <div>
+                  <p className="eyebrow">AUTHORIZED ASSESSMENT · CONTROL PLANE</p>
+                  <h1>Lab Overview &amp; Security Posture</h1>
+                  <p className="heading-copy">
+                    A scoped workspace for evidence-led, deterministic security testing.
+                  </p>
                 </div>
-                <StatePill state={service.name === 'Backend API' && health === 'offline' ? 'Disabled' : service.state} />
-                <span className="service-chevron" aria-hidden="true">›</span>
-              </article>
-            ))}
-          </div>
-        </section>
+              </div>
 
-        <section className="section-block lower-grid">
-          <article className="quiet-card">
-            <div className="card-topline"><span className="eyebrow">EVIDENCE REGISTER</span><span className="card-code">EV / 00</span></div>
-            <h2>No findings ingested</h2>
-            <p>Scanner output will appear only after a scoped, approved run or a validated import. No sample findings are included.</p>
-            <div className="empty-state-line"><span /> WAITING FOR APPROVED INPUT</div>
-          </article>
-          <article className="quiet-card approval-card">
-            <div className="card-topline"><span className="eyebrow">HUMAN CONTROL</span><span className="card-code">AP / 00</span></div>
-            <h2>Active validation disabled</h2>
-            <p>Intrusive web scans and offensive validation require a recorded human approval. No scan action is exposed in this foundation UI.</p>
-            <div className="approval-lock"><span aria-hidden="true">▣</span> APPROVAL GATE REQUIRED</div>
-          </article>
-        </section>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs">
+                  <div className="text-[10px] font-mono font-bold text-slate-400 uppercase">
+                    ACTIVE ASSESSMENT
+                  </div>
+                  <div className="text-sm font-bold text-slate-800 mt-1">
+                    {activeAssessmentId}
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    Target CIDR: 172.30.0.0/24
+                  </div>
+                </div>
 
-        <footer className="page-footer">
-          <span>AI UNIFIED VAPT AGENT</span>
-          <span>LAB-ONLY · NO PUBLIC TARGETS · NO AUTONOMOUS EXPLOITATION</span>
-        </footer>
-      </main>
+                <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs">
+                  <div className="text-[10px] font-mono font-bold text-slate-400 uppercase">
+                    CORRELATED FINDINGS
+                  </div>
+                  <div className="text-xl font-bold text-blue-600 mt-1">
+                    {findings.length}
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    Prioritized mathematically
+                  </div>
+                </div>
+
+                <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs">
+                  <div className="text-[10px] font-mono font-bold text-slate-400 uppercase">
+                    APPROVAL GATE
+                  </div>
+                  <div className="text-xl font-bold text-amber-600 mt-1">
+                    {pendingApprovalsCount} Pending
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    Offensive check modules
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-emerald-50 border border-emerald-300 rounded text-xs text-emerald-900">
+                <strong>✓ Fail-Closed Defensive Scoping Active:</strong> Target execution is
+                restricted strictly to registered private subnets. Out-of-scope targets are rejected
+                automatically by the deterministic scope engine.
+              </div>
+            </div>
+          )}
+
+          {currentTab === 'workspace' && (
+            <Workspace
+              assessmentId={activeAssessmentId}
+              findings={findings}
+              onRequestValidation={handleRequestValidation}
+            />
+          )}
+
+          {currentTab === 'approvals' && (
+            <ApprovalQueue
+              approvals={approvals}
+              onRefresh={() => refreshData(activeAssessmentId)}
+            />
+          )}
+
+          {currentTab === 'reports' && (
+            <ReportView assessmentId={activeAssessmentId} />
+          )}
+
+          {currentTab === 'audit' && (
+            <AuditExplorer
+              assessmentId={activeAssessmentId}
+              auditEvents={auditEvents}
+              onRefresh={() => refreshData(activeAssessmentId)}
+            />
+          )}
+
+          {currentTab === 'integrations' && <IntegrationsMatrix />}
+        </div>
+      </div>
+
+      {/* New Assessment Modal */}
+      <NewAssessmentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onCreated={(id) => {
+          setActiveAssessmentId(id);
+          refreshData(id);
+          setCurrentTab('workspace');
+        }}
+      />
     </div>
   );
 }

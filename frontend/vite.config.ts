@@ -12,6 +12,9 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/health': apiTarget,
+      '/assessments': apiTarget,
+      '/approvals': apiTarget,
+      '/integrations': apiTarget,
       '/api': apiTarget,
     },
   },

@@ -1,0 +1,97 @@
+<section class="section" id="findings-detail">
+    <h2 class="section-title">4. Detailed Vulnerability Findings</h2>
+    
+    {% if not findings %}
+        <p class="no-findings">No vulnerabilities or security findings were identified during this assessment.</p>
+    {% else %}
+        {% for f in findings %}
+        <div class="finding-card severity-border-{{ f.severity | lower }}">
+            <div class="finding-header">
+                <span class="finding-id">{{ f.id }}</span>
+                <span class="finding-title">{{ f.title }}</span>
+                <span class="badge badge-{{ f.severity | lower }}">{{ f.severity | upper }}</span>
+                <span class="badge badge-risk">{{ f.risk_band or 'Unranked' }} ({{ f.risk_score or 0 }}/100)</span>
+            </div>
+
+            <table class="meta-table">
+                <tr>
+                    <td class="meta-label">Affected Target:</td>
+                    <td class="meta-val">{{ f.target_asset or 'N/A' }}</td>
+                    <td class="meta-label">Port / Protocol:</td>
+                    <td class="meta-val">{{ f.target_port or 'N/A' }}/{{ f.target_protocol or 'tcp' }}</td>
+                </tr>
+                <tr>
+                    <td class="meta-label">Category:</td>
+                    <td class="meta-val">{{ f.category or 'Vulnerability' }}</td>
+                    <td class="meta-label">Validation Status:</td>
+                    <td class="meta-val status-val">{{ f.status | upper }} (Confidence: {{ (f.confidence * 100) | round | int }}%)</td>
+                </tr>
+                <tr>
+                    <td class="meta-label">CVSS Base Score:</td>
+                    <td class="meta-val">
+                        {% if f.cvss_score is not none %}
+                            {{ f.cvss_score }} ({{ f.cvss_vector or 'No vector recorded' }})
+                        {% else %}
+                            <em>Not scored by source</em>
+                        {% endif %}
+                    </td>
+                    <td class="meta-label">Contributing Tools:</td>
+                    <td class="meta-val">{{ f.contributing_tools | join(', ') if f.contributing_tools else f.tool }}</td>
+                </tr>
+            </table>
+
+            <div class="finding-body">
+                <h4>Description</h4>
+                <p>{{ f.description }}</p>
+                
+                <div class="evidence-container">
+                    <div class="evidence-observed">
+                        <div class="evidence-header observed-header">
+                            <span class="evidence-tag">OBSERVED EVIDENCE</span>
+                            <span class="evidence-sub">Direct raw scanner output & forensic provenance</span>
+                        </div>
+                        <div class="evidence-content">
+                            {% if f.evidence_snippet %}
+                                <pre class="raw-snippet"><code>{{ f.evidence_snippet }}</code></pre>
+                            {% else %}
+                                <p class="raw-empty">Primary scanner artifact verified without inline payload snippet.</p>
+                            {% endif %}
+                            <div class="trace-info">
+                                <strong>Tool Run ID:</strong> <code>{{ f.tool_run_id }}</code> |
+                                <strong>Raw Locator:</strong> <code>{{ f.raw_reference_locator or 'JSON pointer root' }}</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="evidence-inference">
+                        <div class="evidence-header inference-header">
+                            <span class="evidence-tag">AI INFERENCE</span>
+                            <span class="evidence-sub">Reasoning, contextual impact & prioritization rationale</span>
+                        </div>
+                        <div class="evidence-content">
+                            <p class="inference-text">{{ f.ai_reasoning or f.risk_rationale or 'Finding identified via scanner rule correlation with standard operational risk.' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {% if f.remediation %}
+                <div class="remediation-box">
+                    <h4>Actionable Remediation Guidance</h4>
+                    <p>{{ f.remediation }}</p>
+                    {% if f.references %}
+                    <div class="references-list">
+                        <strong>Authoritative References:</strong>
+                        <ul>
+                            {% for ref in f.references %}
+                            <li><a href="{{ ref }}">{{ ref }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+</section>
